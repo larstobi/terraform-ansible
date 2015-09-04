@@ -59,7 +59,7 @@ func (inv *inventory) MarshalJSON() ([]byte, error) {
 		serialized[key] = value
 	}
 
-	return json.Marshal(serialized)
+	return json.MarshalIndent(serialized, "", "    ")
 }
 
 func (inv *inventory) UnmarshalJSON(b []byte) error {
