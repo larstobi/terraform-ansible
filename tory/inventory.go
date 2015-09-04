@@ -11,21 +11,24 @@ var (
 	groupNameUnsafe = regexp.MustCompile("[^-A-Za-z0-9]")
 )
 
-type inventory struct {
+// Inventory is a struct containing host information.
+type Inventory struct {
 	Meta       *meta `json:"_meta"`
 	groups     map[string][]string
 	groupMutex *sync.Mutex
 }
 
-func newInventory() *inventory {
-	return &inventory{
+// NewInventory returns an inventory struct including a meta struct.
+func NewInventory() *Inventory {
+	return &Inventory{
 		Meta:       newMeta(),
 		groups:     map[string][]string{},
 		groupMutex: &sync.Mutex{},
 	}
 }
 
-func (inv *inventory) GetGroup(group string) []string {
+// GetGroup gets a group by name.
+func (inv *Inventory) GetGroup(group string) []string {
 	inv.groupMutex.Lock()
 	defer inv.groupMutex.Unlock()
 
@@ -36,13 +39,15 @@ func (inv *inventory) GetGroup(group string) []string {
 	return nil
 }
 
-func (inv *inventory) AddHostnameToGroup(group, hostname string) {
+// AddHostnameToGroup adds a hostname to a group and sanitizes it.
+func (inv *Inventory) AddHostnameToGroup(group, hostname string) {
 	sanitizedGroup := groupNameUnsafe.ReplaceAllString(strings.ToLower(group), "_")
 	sanitizedGroup = strings.Replace(sanitizedGroup, ".", "_", -1)
 	inv.AddHostnameToGroupUnsanitized(sanitizedGroup, hostname)
 }
 
-func (inv *inventory) AddHostnameToGroupUnsanitized(group, hostname string) {
+// AddHostnameToGroupUnsanitized adds a hostname to a group without touching it.
+func (inv *Inventory) AddHostnameToGroupUnsanitized(group, hostname string) {
 	inv.groupMutex.Lock()
 	defer inv.groupMutex.Unlock()
 
@@ -52,7 +57,8 @@ func (inv *inventory) AddHostnameToGroupUnsanitized(group, hostname string) {
 	inv.groups[group] = append(inv.groups[group], hostname)
 }
 
-func (inv *inventory) MarshalJSON() ([]byte, error) {
+// MarshalJSON does exactly that.
+func (inv *Inventory) MarshalJSON() ([]byte, error) {
 	serialized := map[string]interface{}{}
 	serialized["_meta"] = inv.Meta
 	for key, value := range inv.groups {
@@ -62,7 +68,8 @@ func (inv *inventory) MarshalJSON() ([]byte, error) {
 	return json.MarshalIndent(serialized, "", "    ")
 }
 
-func (inv *inventory) UnmarshalJSON(b []byte) error {
+// UnmarshalJSON does exacltly that.
+func (inv *Inventory) UnmarshalJSON(b []byte) error {
 	raw := map[string]json.RawMessage{}
 	err := json.Unmarshal(b, &raw)
 	if err != nil {
